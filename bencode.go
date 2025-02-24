@@ -33,22 +33,32 @@ func ParseList(scaner *bufio.Reader) (*BenList, error) {
 	panic("not implemented")
 }
 
+func parseIntUntil(scaner *bufio.Reader, end byte) (int64, error) {
+	var buf []byte
+	for {
+		b, err := scaner.ReadByte()
+		if err != nil { return 0, err }
+		if b == end { break }
+		buf = append(buf, b)
+	}
+	num, _ := strconv.ParseInt(string(buf), 10, 64)
+	return num, nil
+}
+
 func ParseString(scaner *bufio.Reader) (*BenString, error) {
+	size, err := parseIntUntil(':')
+	if err != nil { return nil, err }
+	str := make([]byte, size)
+	scaner.ReadBytes(size)
 	panic("not implemented")
 }
 
 func ParseInt(scaner *bufio.Reader) (*BenInt, error) {
 	b, err := scaner.ReadByte()
 	if err != nil { return nil, err }
-	var buf []byte
 	if b != 'i' { return nil, err }
-	for {
-		b, err := scaner.ReadByte()
-		if err != nil { return nil, err }
-		if b == 'e' { break }
-		buf = append(buf, b)
-	}
-	num, _ := strconv.ParseInt(string(buf), 10, 64)
+	num, err := parseIntUntil(scaner, 'e')
+	if err != nil { return nil, err }
 	return &BenInt{ Num: num }, nil
 }
 
