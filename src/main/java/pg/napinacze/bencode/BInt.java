@@ -2,12 +2,17 @@ package pg.napinacze.bencode;
 
 import java.io.IOException;
 
-public class BInt extends BValue<Long> {
+public class BInt extends BValue<Long> implements Comparable<BValue<Long>> {
     public BInt() {
     }
 
     public BInt(long value) {
         this.value = value;
+    }
+
+    @Override
+    public int compareTo(BValue<Long> other) {
+        return this.value.compareTo(other.value);
     }
 
     @Override

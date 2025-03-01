@@ -2,17 +2,21 @@ package pg.napinacze.bencode;
 
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
-import java.util.Arrays;
 
 import static java.lang.Math.toIntExact;
 
-public class BString extends BValue<byte[]> {
+public class BString extends BValue<byte[]> implements Comparable<BValue<byte[]>> {
     public BString() {
         super();
     }
 
     public BString(byte[] value) {
         super(value);
+    }
+
+    @Override
+    public int compareTo(BValue<byte[]> other) {
+        return new String(this.value).compareTo(new String(other.value));
     }
 
     @Override

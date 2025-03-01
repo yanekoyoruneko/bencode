@@ -1,40 +1,30 @@
 package pg.napinacze.bencode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
-import java.io.StringReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.net.URISyntaxException;
 
-import pg.napinacze.bencode.BInt;
-import pg.napinacze.bencode.BString;
-import pg.napinacze.bencode.BDict;
-
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import org.junit.jupiter.params.provider.CsvSource;
 
-import org.junit.jupiter.api.Test;
-
 public class BencodeTest {
     @ParameterizedTest
-    @ValueSource(ints = { 2137, 42, 100, -1, 0 }) // You can add any integers here
+    @ValueSource(ints = { 2137, 42, 100, -1, 0 })
     void testBInt(int test) throws IOException {
         var encode = "i" + test + "e";
         var decoder = new Decoder(ByteBuffer.wrap(encode.getBytes()));
         var bint = BInt.parseBInt(decoder);
         assertEquals(encode, bint.toString());
-
+        BInt[] arr = { bint, bint, bint, bint };
+        Arrays.sort(arr);
     }
 
     @ParameterizedTest
