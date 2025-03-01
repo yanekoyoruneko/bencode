@@ -1,5 +1,6 @@
 package pg.napinacze.bencode;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -10,11 +11,11 @@ public class BDict extends BValue<SortedMap<BString, BValue<?>>> {
     }
 
     @Override
-    public String YAML() {
-        return this.YAMLindent(0);
+    public String toString() {
+        return this.toString(0);
     }
 
-    public String YAMLindent(int indent) {
+    public String toString(int indent) {
         var yaml = new StringBuilder();
         for (var key : this.value.keySet()) {
             for (int i = 0; i < indent; i++) {
@@ -22,11 +23,11 @@ public class BDict extends BValue<SortedMap<BString, BValue<?>>> {
             }
             var bvalue = this.value.get(key);
             if (bvalue instanceof BInt || bvalue instanceof BString) {
-                yaml.append(key.YAML() + ": " + bvalue.YAML() + "\n");
+                yaml.append(key.toString() + ": " + bvalue.toString() + "\n");
             } else if (bvalue instanceof BList blist) {
-                yaml.append(key.YAML() + ":\n" + blist.YAMLindent(indent));
+                yaml.append(key.toString() + ":\n" + blist.toString(indent));
             } else if (bvalue instanceof BDict bdict) {
-                yaml.append(key.YAML() + ":\n" + bdict.YAMLindent(indent + 4));
+                yaml.append(key.toString() + ":\n" + bdict.toString(indent + 4));
             } else {
                 assert true : "unreachable";
             }
@@ -35,11 +36,15 @@ public class BDict extends BValue<SortedMap<BString, BValue<?>>> {
     }
 
     @Override
-    public String toString() {
-        var repr = new StringBuilder("d");
-        // this is written like this just for fun dont judge me
-        this.value.keySet().forEach(key -> repr.append(key).append(this.value.get(key)));
-        return repr + "e";
+    public byte[] toBytes() throws IOException {
+        var buf = new ByteArrayOutputStream();
+        buf.write('d');
+        for (var key : this.value.keySet()) {
+            buf.write(key.toBytes());
+            buf.write(this.value.get(key).toBytes());
+        }
+        buf.write('e');
+        return buf.toByteArray();
     }
 
     public static BDict parseBDict(Decoder decoder) throws IOException {

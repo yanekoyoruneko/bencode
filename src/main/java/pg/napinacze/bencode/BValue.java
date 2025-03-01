@@ -1,5 +1,7 @@
 package pg.napinacze.bencode;
 
+import java.io.IOException;
+
 abstract class BValue<T> {
     protected T value;
 
@@ -22,9 +24,9 @@ abstract class BValue<T> {
         this.value = value;
     }
 
-    abstract public String YAML();
-
     abstract public String toString();
+
+    abstract public byte[] toBytes() throws IOException;
 
     public T getValue() {
         return value;

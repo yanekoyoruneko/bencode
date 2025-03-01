@@ -1,5 +1,6 @@
 package pg.napinacze.bencode;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -13,11 +14,11 @@ public class BList extends BValue<ArrayList<BValue<?>>> {
     }
 
     @Override
-    public String YAML() {
-        return YAMLindent(0);
+    public String toString() {
+        return toString(0);
     }
 
-    public String YAMLindent(int indent) {
+    public String toString(int indent) {
         var yaml = new StringBuffer();
         for (var el : this.value) {
             for (int i = 0; i < indent; i++) {
@@ -25,11 +26,11 @@ public class BList extends BValue<ArrayList<BValue<?>>> {
             }
             yaml.append("- ");
             if (el instanceof BInt || el instanceof BString) {
-                yaml.append(el.YAML() + "\n");
+                yaml.append(el.toString() + "\n");
             } else if (el instanceof BList blist) {
-                yaml.append("\n" + blist.YAMLindent(indent));
+                yaml.append("\n" + blist.toString(indent));
             } else if (el instanceof BDict bdict) {
-                yaml.append("\n" + bdict.YAMLindent(indent + 4));
+                yaml.append("\n" + bdict.toString(indent + 4));
             } else {
                 assert true : "unreachable";
             }
@@ -38,10 +39,14 @@ public class BList extends BValue<ArrayList<BValue<?>>> {
     }
 
     @Override
-    public String toString() {
-        var repr = new StringBuilder("l");
-        this.value.forEach(key -> repr.append(key.toString()));
-        return repr + "e";
+    public byte[] toBytes() throws IOException {
+        var buf = new ByteArrayOutputStream();
+        buf.write('l');
+        for (var el : this.value) {
+            buf.write(el.toBytes());
+        }
+        buf.write('e');
+        return buf.toByteArray();
     }
 
     public static BList parseBList(Decoder decoder) throws IOException {

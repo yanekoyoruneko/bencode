@@ -2,8 +2,14 @@ package pg.napinacze.bencode;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public class Decoder {
+    final public static Charset encoding = StandardCharsets.UTF_8;
     private ByteBuffer buffer;
     static int indent = 0;
 
@@ -36,6 +42,26 @@ public class Decoder {
             throw new IOException("parseIntUntil: unexpected EOF");
         }
         return Long.parseLong(buf);
+    }
+
+    public static <T extends Map<String, Integer>> Map<String, Integer> stat(BValue<?> bval, Supplier<T> mapsup) {
+        return stati(bval, mapsup.get());
+    }
+
+    private static <T extends Map<String, Integer>> Map<String, Integer> stati(BValue<?> bval,
+            Map<String, Integer> count) {
+        String className = bval.getClass().getName();
+        count.put(className, count.getOrDefault(className, 0) + 1);
+        if (bval instanceof BList blist) {
+            for (var el : blist.getValue())
+                stati(el, count);
+        } else if (bval instanceof BDict bdict) {
+            for (var key : bdict.getValue().keySet()) {
+                stati(key, count);
+                stati(bdict.getValue().get(key), count);
+            }
+        }
+        return count;
     }
 
     public BValue<?> parse() throws IOException {

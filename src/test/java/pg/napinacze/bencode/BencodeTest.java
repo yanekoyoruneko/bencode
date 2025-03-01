@@ -1,10 +1,14 @@
 package pg.napinacze.bencode;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.TreeMap;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,7 +26,7 @@ public class BencodeTest {
         var encode = "i" + test + "e";
         var decoder = new Decoder(ByteBuffer.wrap(encode.getBytes()));
         var bint = BInt.parseBInt(decoder);
-        assertEquals(encode, bint.toString());
+        assertArrayEquals(encode.getBytes(), bint.toBytes());
         BInt[] arr = { bint, bint, bint, bint };
         Arrays.sort(arr);
     }
@@ -33,7 +37,7 @@ public class BencodeTest {
         var encode = test.length() + ":" + test;
         var decoder = new Decoder(ByteBuffer.wrap(encode.getBytes()));
         var bstr = BString.parseBString(decoder);
-        assertEquals(encode, bstr.toString());
+        assertArrayEquals(encode.getBytes(), bstr.toBytes());
     }
 
     @ParameterizedTest
@@ -41,7 +45,7 @@ public class BencodeTest {
     void testBDict(String testInput) throws IOException {
         var decoder = new Decoder(ByteBuffer.wrap(testInput.getBytes()));
         var bdict = BDict.parseBDict(decoder);
-        assertEquals(testInput, bdict.toString());
+        assertArrayEquals(testInput.getBytes(), bdict.toBytes());
     }
 
     @ParameterizedTest
@@ -49,7 +53,7 @@ public class BencodeTest {
     void testBencodeList(String testInput) throws IOException {
         var decoder = new Decoder(ByteBuffer.wrap(testInput.getBytes()));
         var blist = BList.parseBList(decoder);
-        assertEquals(testInput, blist.toString());
+        assertArrayEquals(testInput.getBytes(), blist.toBytes());
     }
 
     @ParameterizedTest
@@ -59,8 +63,11 @@ public class BencodeTest {
         byte[] raw = Files.readAllBytes(path);
         var decoder = new Decoder(ByteBuffer.wrap(raw));
         var metainfo = decoder.parse();
+        Path dump = path.resolveSibling(filepath.substring(1) + "-dump");
         System.out.println(path);
-        System.out.println(metainfo.YAML());
-        assertEquals(metainfo.toString(), new String(raw).trim());
+        System.out.println(Decoder.stat(metainfo, TreeMap::new));
+        System.out.println(metainfo.toString());
+        Files.write(dump, metainfo.toBytes());
+        assertArrayEquals(metainfo.toBytes(), Arrays.copyOfRange(raw, 0, raw.length - 1));
     }
 }

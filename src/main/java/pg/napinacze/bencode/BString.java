@@ -1,7 +1,11 @@
 package pg.napinacze.bencode;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
+import java.nio.charset.StandardCharsets;
+import java.io.ByteArrayOutputStream;
 
 import static java.lang.Math.toIntExact;
 
@@ -20,7 +24,7 @@ public class BString extends BValue<byte[]> implements Comparable<BValue<byte[]>
     }
 
     @Override
-    public String YAML() {
+    public String toString() {
         if (this.value.length > 1024) {
             return "<" + this.value.length + ":BLOB>";
         }
@@ -28,8 +32,12 @@ public class BString extends BValue<byte[]> implements Comparable<BValue<byte[]>
     }
 
     @Override
-    public String toString() {
-        return this.value.length + ":" + new String(this.value);
+    public byte[] toBytes() throws IOException {
+        var buf = new ByteArrayOutputStream();
+        buf.write(Long.toString(this.value.length).getBytes());
+        buf.write(':');
+        buf.write(this.value);
+        return buf.toByteArray();
     }
 
     public static BString parseBString(Decoder decoder) throws IOException {
