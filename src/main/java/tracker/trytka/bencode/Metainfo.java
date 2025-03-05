@@ -4,9 +4,10 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 
 public class Metainfo {
-    private BString info_name, info_pieces, announce, createdBy, comment, encoding;
-    private BInt length, info_pieceLength, creationDate;
-    private final String[] fields;
+    public BString info_name, info_pieces, announce, createdBy, comment, encoding;
+    public BInt length, info_pieceLength, creationDate, info_private, info_length;
+    public BList info_files;
+    private final String[] fields; // name of fields above
 
     public Metainfo() {
         this.fields = Arrays.stream(this.getClass().getDeclaredFields())
@@ -14,7 +15,6 @@ public class Metainfo {
                             .map(Field::getName)
                             .toArray(String[]::new);
     }
-
 
     @Override
     public String toString() {
@@ -33,67 +33,74 @@ public class Metainfo {
         }
     }
 
-    private static BValue<?> fromBDict(BDict bdict, String key) {
-        BValue<?> value = bdict;
-        for (var path : key.split("_")) {
-            if ((value = ((BDict) value).get(path)) == null) {
-                return null;
+    private BValue<?> getFieldValue(Field field) {
+            try {
+                return (BValue<?>) field.get(this);
+            } catch (IllegalAccessException e) {
+                throw new IllegalStateException("unreachable");
             }
-            if (!(value instanceof BDict)) {
-                return value;
-            }
+    }
+
+    private void setFieldValue(Field field, BValue<?> value) {
+        try {
+            field.set(this, value);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException("unreachable: fields names should match class fields");
         }
-        return value;
+    }
+
+    private static String toMetaName(String name) {
+        return name.replaceAll("([a-z])([A-Z])", "$1 $2").toLowerCase();
+    }
+
+    private static void putMetaValue(BDict bdict, String key, BValue<?> value) {
+            var path = key.split("_");
+            if (path[0].equals("info")) {
+                var info = bdict.get("info");
+                if (info == null) {
+                    bdict.put("info", new BDict());
+                }
+                ((BDict) bdict.get("info")).put(toMetaName(path[1]), value);
+            } else {
+                bdict.put(toMetaName(path[0]), value);
+            }
+    }
+
+
+    private static BValue<?> getMetaValue(BDict bdict, String key) {
+        var path = key.split("_");
+        if (path[0].equals("info")) {
+            return ((BDict)bdict.get("info")).get(toMetaName(path[1]));
+        }
+        return bdict.get(toMetaName(key));
     }
 
     public static Metainfo of(BDict bdict) throws IllegalArgumentException {
         var meta = new Metainfo();
         for (String key : meta.fields) {
             BValue<?> value;
-            if ((value = fromBDict(bdict, key)) == null) {
+            if ((value = getMetaValue(bdict, key)) == null) {
                 continue;
             }
             Field field = meta.getField(key);
             try {
-                field.set(meta, value);
-            } catch (IllegalAccessException e) {
-                throw new IllegalStateException(
-                        "unreachable: fields strings should match class fields");
+                meta.setFieldValue(field, value);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("metainfo malformed: invalid type for '" + key + "'");
             }
         }
         return meta;
-    }
-
-    public static void putAt(BDict bdict, String key, BValue<?> value) {
-            BValue<?> dest = bdict;
-            var path = key.split("_");
-            for (var sub : Arrays.copyOfRange(path, 0, path.length - 1)) {
-                if (((BDict)dest).get(sub) == null) {
-                    var subBDict = new BDict();
-                    ((BDict)dest).put(sub, subBDict);
-                    dest = subBDict;
-                } else {
-                    // subpath must be bdict
-                    dest = ((BDict) dest).get(sub);
-                }
-            }
-            ((BDict)dest).put(path[path.length - 1], value);
     }
 
     public BDict make() {
-        var meta = new BDict();
-        for (String key : fields) {
-            Field field = getField(key);
-            BValue<?> value;
-            try {
-                if ((value = (BValue<?>)field.get(this)) == null) {
-                    continue;
-                }
-            } catch (IllegalAccessException e) {
-                throw new IllegalStateException("unreachable");
+        var bdict = new BDict();
+        for (String key : this.fields) {
+            var value = getFieldValue(getField(key));
+            if (value == null) {
+                continue;
             }
-            putAt(meta, key, value);
+            putMetaValue(bdict, key, value);
         }
-        return meta;
+        return bdict;
     }
 }

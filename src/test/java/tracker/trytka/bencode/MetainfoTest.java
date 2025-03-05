@@ -5,19 +5,20 @@ import java.nio.ByteBuffer;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
 
 public class MetainfoTest {
-    //        "d"
-
     @ParameterizedTest
-    @ValueSource(strings = { "d4:infod4:name4:abcdee", "d8:announce4:abcd4:infod12:piece lengthi134eee" })
-    void testMetainfo(String testInput) throws IOException {
-        var decoder = new Decoder(ByteBuffer.wrap(testInput.getBytes()));
-        var bdict = BDict.parseBDict(decoder);
-        var meta = Metainfo.of(bdict);
-        // System.out.println(((BDict)bdict.get("info")).getValue().get(new
-        // BString("piece length")));
+    @ValueSource(strings = { "/rurouni.torrent", "/tears.torrent" })
+    void testMetainfo(String filepath) throws IOException, URISyntaxException {
+        Path path = Paths.get(getClass().getResource(filepath).toURI());
+        byte[] raw = Files.readAllBytes(path);
+        var decoder = new Decoder(ByteBuffer.wrap(raw));
+        var bdict = decoder.parse();
+        var meta = Metainfo.of((BDict)bdict);
         System.out.println(meta);
     }
 }
