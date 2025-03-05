@@ -1,7 +1,7 @@
-package pg.napinacze.bencode;
+package tracker.trytka.bencode;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 public class BInt extends BValue<Long> implements Comparable<BValue<Long>> {
     public BInt() {
@@ -9,6 +9,10 @@ public class BInt extends BValue<Long> implements Comparable<BValue<Long>> {
 
     public BInt(long value) {
         this.value = value;
+    }
+
+    public BInt(int value) {
+        this.value = (long)value;
     }
 
     @Override
@@ -22,13 +26,14 @@ public class BInt extends BValue<Long> implements Comparable<BValue<Long>> {
     }
 
     @Override
-    public byte[] toBytes() {
-        return ("i" + this.value + "e").getBytes(StandardCharsets.UTF_8);
+    public void encode(ByteArrayOutputStream out) {
+        var long_bytes = ("i" + this.value + "e").getBytes(Decoder.encoding);
+        out.write(long_bytes, 0, long_bytes.length);
     }
 
     public static BInt parseBInt(Decoder decoder) throws IOException {
         if (decoder.read() != 'i') {
-            throw new IllegalArgumentException("Int.parse: invalid format: expected 'i'");
+            throw new IllegalArgumentException("malformed: expected 'i'");
         }
         byte sign = decoder.peek();
         if (sign == '-')
@@ -37,7 +42,7 @@ public class BInt extends BValue<Long> implements Comparable<BValue<Long>> {
         if (sign == '-')
             bint.value = -bint.value;
         if (decoder.read() != 'e') {
-            throw new IllegalArgumentException("Int.parse: invalid format: expected 'e'");
+            throw new IllegalArgumentException("malformed: expected 'e'");
         }
         return bint;
     }

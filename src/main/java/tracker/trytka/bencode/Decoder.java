@@ -1,8 +1,7 @@
-package pg.napinacze.bencode;
+package tracker.trytka.bencode;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.nio.charset.Charset;
@@ -11,13 +10,15 @@ import java.nio.charset.StandardCharsets;
 public class Decoder {
     final public static Charset encoding = StandardCharsets.UTF_8;
     private ByteBuffer buffer;
-    static int indent = 0;
 
     public Decoder(java.nio.ByteBuffer in) {
         this.buffer = in;
     }
 
-    public byte peek() {
+    public byte peek() throws IOException {
+        if (buffer.remaining() == 0) {
+            throw new IOException("Unexpected EOF");
+        }
         return buffer.get(buffer.position());
     }
 
@@ -34,12 +35,12 @@ public class Decoder {
         byte peeked;
         while ((peeked = this.peek()) != until && peeked != -1) {
             if (!Character.isDigit(peeked)) {
-                throw new NumberFormatException("parseIntUntil: invalid format: expected digit");
+                throw new NumberFormatException("malformed: expected digit");
             }
             buf += (char) this.read();
         }
         if (peeked == -1) {
-            throw new IOException("parseIntUntil: unexpected EOF");
+            throw new IOException("Unexpected EOF");
         }
         return Long.parseLong(buf);
     }
@@ -76,7 +77,7 @@ public class Decoder {
         if (Character.isDigit(this.peek())) {
             return BString.parseBString(this);
         } else {
-            throw new IllegalArgumentException("parse: invalid format");
+            throw new IllegalArgumentException("malformed: can't match any data type");
         }
     }
 }

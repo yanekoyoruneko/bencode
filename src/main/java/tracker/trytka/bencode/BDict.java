@@ -1,4 +1,4 @@
-package pg.napinacze.bencode;
+package tracker.trytka.bencode;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -8,6 +8,30 @@ import java.util.TreeMap;
 public class BDict extends BValue<SortedMap<BString, BValue<?>>> {
     public BDict() {
         this.value = new TreeMap<>();
+    }
+
+    public BDict put(String key, Long bint) {
+        this.value.put(new BString(key), new BInt(bint));
+        return this;
+    }
+
+    public BDict put(String key, byte[] bstr) {
+        this.value.put(new BString(key), new BString(bstr));
+        return this;
+    }
+
+    public BDict put(String key, String bstr) {
+        this.value.put(new BString(key), new BString(bstr));
+        return this;
+    }
+
+    public BDict put(String key, BValue<?> bval) {
+        this.value.put(new BString(key), bval);
+        return this;
+    }
+
+    public BValue<?> get(String key) {
+        return this.value.get(new BString(key));
     }
 
     @Override
@@ -28,28 +52,24 @@ public class BDict extends BValue<SortedMap<BString, BValue<?>>> {
                 yaml.append(key.toString() + ":\n" + blist.toString(indent));
             } else if (bvalue instanceof BDict bdict) {
                 yaml.append(key.toString() + ":\n" + bdict.toString(indent + 4));
-            } else {
-                assert true : "unreachable";
             }
         }
         return yaml.toString();
     }
 
     @Override
-    public byte[] toBytes() throws IOException {
-        var buf = new ByteArrayOutputStream();
-        buf.write('d');
+    public void encode(ByteArrayOutputStream out) {
+        out.write((byte) 'd');
         for (var key : this.value.keySet()) {
-            buf.write(key.toBytes());
-            buf.write(this.value.get(key).toBytes());
+            key.encode(out);
+            this.value.get(key).encode(out);
         }
-        buf.write('e');
-        return buf.toByteArray();
+        out.write((byte) 'e');
     }
 
     public static BDict parseBDict(Decoder decoder) throws IOException {
         if (decoder.read() != 'd') {
-            throw new IllegalArgumentException("BDict: invalid format: expected 'd'");
+            throw new IllegalArgumentException("malformed: expected 'd'");
         }
         var bdict = new BDict();
         byte peeked;
@@ -58,10 +78,10 @@ public class BDict extends BValue<SortedMap<BString, BValue<?>>> {
             bdict.value.put(key, decoder.parse());
         }
         if (peeked == -1) {
-            throw new IOException("BDict: unexpected EOF");
+            throw new IOException("unexpected EOF");
         }
         if (decoder.read() != 'e') {
-            throw new IOException("(unreachable) BDict: invalid format: expected 'e'");
+            throw new IllegalStateException("(unreachable) expected 'e'");
         }
         return bdict;
     }

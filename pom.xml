@@ -3,13 +3,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>pg.napinacze.bencode</groupId>
+  <groupId>tracker.trytka.bencode</groupId>
   <artifactId>bencode</artifactId>
   <version>1.0-SNAPSHOT</version>
 
   <name>bencode</name>
-  <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
+  <url>http://github.com/yanekoyoruneko/bencode</url>
+
+  <description>
+    Torrent metainfo parser. Defines classes for extracting bencoded data and serializing them.
+  </description>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -29,6 +32,12 @@
   </dependencyManagement>
 
   <dependencies>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.36</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
@@ -115,14 +124,97 @@
       </plugins>
     </pluginManagement>
     <plugins>
-      <plugin>
-	    <groupId>net.revelc.code.formatter</groupId>
-	    <artifactId>formatter-maven-plugin</artifactId>
-      </plugin>
+      <!-- <plugin> -->
+	  <!--   <groupId>net.revelc.code.formatter</groupId> -->
+	  <!--   <artifactId>formatter-maven-plugin</artifactId> -->
+      <!-- </plugin> -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>3.3.1</version>
+        <dependencies>
+          <dependency>
+            <groupId>me.fabriciorby</groupId>
+            <artifactId>maven-surefire-junit5-tree-reporter</artifactId>
+            <version>1.4.0</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <reportFormat>plain</reportFormat>
+          <consoleOutputReporter>
+            <disable>false</disable>
+          </consoleOutputReporter>
+          <statelessTestsetInfoReporter
+              implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter">
+              <printStacktraceOnError>true</printStacktraceOnError>
+              <printStacktraceOnFailure>true</printStacktraceOnFailure>
+              <printStdoutOnError>true</printStdoutOnError>
+              <printStdoutOnFailure>true</printStdoutOnFailure>
+              <printStdoutOnSuccess>false</printStdoutOnSuccess>
+              <printStderrOnError>true</printStderrOnError>
+              <printStderrOnFailure>true</printStderrOnFailure>
+              <printStderrOnSuccess>false</printStderrOnSuccess>
+            <theme>UNICODE</theme>
+          </statelessTestsetInfoReporter>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>analyze</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>2.44.0</version>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>apply</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <java>
+            <removeUnusedImports />
+          </java>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>1.18.30</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
       </plugin>
     </plugins>
   </build>
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.11.2</version>
+        <configuration>
+        </configuration>
+      </plugin>
+    </plugins>
+  </reporting>
 </project>

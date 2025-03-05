@@ -1,21 +1,43 @@
-package pg.napinacze.bencode;
+package tracker.trytka.bencode;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
-import java.nio.charset.StandardCharsets;
-import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
+import java.util.Objects;
 
 import static java.lang.Math.toIntExact;
 
+/**
+ * Binary string
+ */
 public class BString extends BValue<byte[]> implements Comparable<BValue<byte[]>> {
     public BString() {
         super();
     }
 
+    public BString(String string) {
+        super(string.getBytes(Decoder.encoding));
+    }
+
     public BString(byte[] value) {
         super(value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(Arrays.hashCode(this.value));
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (other == null || getClass() != other.getClass()) {
+            return false;
+        }
+        return Arrays.equals(this.value, ((BString)other).getValue());
     }
 
     @Override
@@ -32,12 +54,11 @@ public class BString extends BValue<byte[]> implements Comparable<BValue<byte[]>
     }
 
     @Override
-    public byte[] toBytes() throws IOException {
-        var buf = new ByteArrayOutputStream();
-        buf.write(Long.toString(this.value.length).getBytes());
-        buf.write(':');
-        buf.write(this.value);
-        return buf.toByteArray();
+    public void encode(ByteArrayOutputStream out) {
+        var long_bytes = Long.toString(this.value.length).getBytes(Decoder.encoding);
+        out.write(long_bytes, 0, long_bytes.length);
+        out.write((byte) ':');
+        out.write(this.value, 0, this.value.length);
     }
 
     public static BString parseBString(Decoder decoder) throws IOException {
@@ -45,18 +66,18 @@ public class BString extends BValue<byte[]> implements Comparable<BValue<byte[]>
         try {
             length = toIntExact(decoder.parseUintUntil(':'));
         } catch (ArithmeticException e) {
-            throw new IllegalArgumentException("BString.parse: string size to big");
+            throw new IllegalArgumentException("Tagged string size to big");
         }
 
         if (decoder.read() != ':') {
-            throw new IllegalArgumentException("BString.parse: invalid format: expected ':'");
+            throw new IllegalArgumentException(": expected ':'");
         }
 
         byte[] buf = new byte[length];
         try {
             decoder.read(buf);
         } catch (BufferUnderflowException e) {
-            throw new IOException("BString.parse: unexpected EOF");
+            throw new IOException("Unexpected EOF");
         }
         return new BString(buf);
     }

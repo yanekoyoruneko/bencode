@@ -1,4 +1,4 @@
-package pg.napinacze.bencode;
+package tracker.trytka.bencode;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -13,9 +13,29 @@ public class BList extends BValue<ArrayList<BValue<?>>> {
         super(value);
     }
 
+    public BList add(Long bint) {
+        this.value.add(new BInt(bint));
+        return this;
+    }
+
+    public BList add(byte[] bstr) {
+        this.value.add(new BString(bstr));
+        return this;
+    }
+
+    public BList add(String bstr) {
+        this.value.add(new BString(bstr));
+        return this;
+    }
+
+    public BList add(String key, BValue<?> bval) {
+        this.value.add(bval);
+        return this;
+    }
+
     @Override
     public String toString() {
-        return toString(0);
+        return toString();
     }
 
     public String toString(int indent) {
@@ -31,27 +51,23 @@ public class BList extends BValue<ArrayList<BValue<?>>> {
                 yaml.append("\n" + blist.toString(indent));
             } else if (el instanceof BDict bdict) {
                 yaml.append("\n" + bdict.toString(indent + 4));
-            } else {
-                assert true : "unreachable";
             }
         }
         return yaml.toString();
     }
 
     @Override
-    public byte[] toBytes() throws IOException {
-        var buf = new ByteArrayOutputStream();
-        buf.write('l');
+    public void encode(ByteArrayOutputStream out) {
+        out.write((byte) 'l');
         for (var el : this.value) {
-            buf.write(el.toBytes());
+            el.encode(out);
         }
-        buf.write('e');
-        return buf.toByteArray();
+        out.write((byte) 'e');
     }
 
     public static BList parseBList(Decoder decoder) throws IOException {
         if (decoder.read() != 'l') {
-            throw new IllegalArgumentException("BList: invalid format: expected 'l'");
+            throw new IllegalArgumentException("malformed: expected 'l'");
         }
         var blist = new BList();
         byte peeked;
@@ -59,10 +75,10 @@ public class BList extends BValue<ArrayList<BValue<?>>> {
             blist.value.add(decoder.parse());
         }
         if (peeked == -1) {
-            throw new IOException("BList: unexpected EOF");
+            throw new IOException("unexpected EOF");
         }
         if (decoder.read() != 'e') {
-            throw new IOException("(unreachable): BList: invalid format: expected 'e'");
+            throw new IllegalStateException("(unreachable) expected 'e'");
         }
         return blist;
     }
