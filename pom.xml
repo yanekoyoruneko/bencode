@@ -34,17 +34,7 @@
   <dependencies>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -54,9 +44,9 @@
     </dependency>
   </dependencies>
 
-
   <build>
-    <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
+    <pluginManagement>
+<!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
         <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
         <plugin>
@@ -97,31 +87,9 @@
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>3.6.1</version>
         </plugin>
-	    <plugin>
-	      <groupId>net.revelc.code.formatter</groupId>
-	      <artifactId>formatter-maven-plugin</artifactId>
-	      <version>2.25.0</version>
-	      <executions>
-	        <execution>
-              <goals>
-		        <goal>format</goal>
-		        <goal>validate</goal>
-              </goals>
-	          <phase>process-sources</phase>
-              <configuration>
-                <!-- <configFile>${basedir}/google-style.xml</configFile> -->
-		        <encoding>UTF-8</encoding>
-              </configuration>
-	        </execution>
-	      </executions>
-	    </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
-      <!-- <plugin> -->
-	  <!--   <groupId>net.revelc.code.formatter</groupId> -->
-	  <!--   <artifactId>formatter-maven-plugin</artifactId> -->
-      <!-- </plugin> -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.3.1</version>
@@ -133,6 +101,7 @@
           </dependency>
         </dependencies>
         <configuration>
+	  <!-- tree style reporting -->
           <reportFormat>plain</reportFormat>
           <consoleOutputReporter>
             <disable>false</disable>
@@ -151,13 +120,13 @@
           </statelessTestsetInfoReporter>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <version>3.5.0</version>
         <executions>
           <execution>
-            <phase>compile</phase>
             <goals>
               <goal>analyze</goal>
             </goals>
@@ -179,27 +148,19 @@
         </executions>
         <configuration>
           <java>
+            <googleJavaFormat>
+              <version>1.17.0</version>
+              <style>GOOGLE</style>
+              <reflowLongStrings>true</reflowLongStrings>
+              <formatJavadoc>false</formatJavadoc>
+            </googleJavaFormat>
             <removeUnusedImports />
           </java>
         </configuration>
       </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
-        <configuration>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>org.projectlombok</groupId>
-              <artifactId>lombok</artifactId>
-              <version>1.18.30</version>
-            </path>
-          </annotationProcessorPaths>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
+
   <reporting>
     <plugins>
       <plugin>
@@ -211,4 +172,5 @@
       </plugin>
     </plugins>
   </reporting>
+
 </project>

@@ -8,45 +8,43 @@ import java.util.Objects;
  * Extends the {@link BValue} class and adds functionality for handling strings.
  */
 public abstract class BValue<T> {
-    protected T value;
+  protected T value;
 
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof BValue otherval)
-            return this.value.equals(otherval.value);
-        return false;
-    }
+  @Override
+  public boolean equals(Object other) {
+    if (other instanceof BValue otherval) return this.value.equals(otherval.value);
+    return false;
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.value);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.value);
+  }
 
-    public BValue() {
-    }
+  public BValue() {}
 
-    public BValue(T value) {
-        this.value = value;
-    }
+  public BValue(T value) {
+    this.value = value;
+  }
 
-    abstract public String toString();
+  public abstract String toString();
 
-    /**
-     * Generate bencoding.
-     */
-    final public byte[] encode() {
-        var out = new ByteArrayOutputStream();
-        encode(out);
-        return out.toByteArray();
-    }
+  /**
+   * Generate bencoding.
+   */
+  public final byte[] encode() {
+    var out = new ByteArrayOutputStream();
+    encode(out);
+    return out.toByteArray();
+  }
 
-    abstract protected void encode(ByteArrayOutputStream out);
+  protected abstract void encode(ByteArrayOutputStream out);
 
-    public T getValue() {
-        return value;
-    }
+  public T getValue() {
+    return value;
+  }
 
-    public void setValue(T value) {
-        this.value = value;
-    }
+  public void setValue(T value) {
+    this.value = value;
+  }
 }
