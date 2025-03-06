@@ -67,7 +67,7 @@ public class BList extends BValue<ArrayList<BValue<?>>> {
 
   public static BList parseBList(Decoder decoder) throws IOException {
     if (decoder.read() != 'l') {
-      throw new IllegalArgumentException("malformed: expected 'l'");
+      throw new IllegalArgumentException("Malformed input: expected 'l'");
     }
     var blist = new BList();
     byte peeked;
@@ -78,7 +78,7 @@ public class BList extends BValue<ArrayList<BValue<?>>> {
       throw new IOException("unexpected EOF");
     }
     if (decoder.read() != 'e') {
-      throw new IllegalStateException("(unreachable) expected 'e'");
+      throw new IllegalStateException("UNREACHABLE: Expected 'e'");
     }
     return blist;
   }

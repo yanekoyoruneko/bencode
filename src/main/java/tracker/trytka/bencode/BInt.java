@@ -32,14 +32,14 @@ public class BInt extends BValue<Long> implements Comparable<BValue<Long>> {
 
   public static BInt parseBInt(Decoder decoder) throws IOException {
     if (decoder.read() != 'i') {
-      throw new IllegalArgumentException("malformed: expected 'i'");
+      throw new IllegalArgumentException("Malformed input: Expected 'i'");
     }
     byte sign = decoder.peek();
     if (sign == '-') decoder.read();
     BInt bint = new BInt(decoder.parseUintUntil('e'));
     if (sign == '-') bint.value = -bint.value;
     if (decoder.read() != 'e') {
-      throw new IllegalArgumentException("malformed: expected 'e'");
+      throw new IllegalArgumentException("Malformed input: Expected 'e'");
     }
     return bint;
   }

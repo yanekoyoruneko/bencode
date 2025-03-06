@@ -8,9 +8,6 @@ import java.nio.BufferUnderflowException;
 import java.util.Arrays;
 import java.util.Objects;
 
-/**
- * Binary string
- */
 public class BString extends BValue<byte[]> implements Comparable<BValue<byte[]>> {
   public BString() {
     super();
@@ -66,11 +63,11 @@ public class BString extends BValue<byte[]> implements Comparable<BValue<byte[]>
     try {
       length = toIntExact(decoder.parseUintUntil(':'));
     } catch (ArithmeticException e) {
-      throw new IllegalArgumentException("Tagged string size to big");
+      throw new IllegalArgumentException("Tagged string size exceeds 32 bits");
     }
 
     if (decoder.read() != ':') {
-      throw new IllegalArgumentException(": expected ':'");
+      throw new IllegalArgumentException("Malformed input: Expected ':'");
     }
 
     byte[] buf = new byte[length];

@@ -3,10 +3,6 @@ package tracker.trytka.bencode;
 import java.io.ByteArrayOutputStream;
 import java.util.Objects;
 
-/**
- * Represents a custom string wrapper class.
- * Extends the {@link BValue} class and adds functionality for handling strings.
- */
 public abstract class BValue<T> {
   protected T value;
 
@@ -29,9 +25,6 @@ public abstract class BValue<T> {
 
   public abstract String toString();
 
-  /**
-   * Generate bencoding.
-   */
   public final byte[] encode() {
     var out = new ByteArrayOutputStream();
     encode(out);

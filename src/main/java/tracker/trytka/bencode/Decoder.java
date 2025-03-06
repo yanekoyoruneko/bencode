@@ -35,7 +35,7 @@ public class Decoder {
     byte peeked;
     while ((peeked = this.peek()) != until && peeked != -1) {
       if (!Character.isDigit(peeked)) {
-        throw new NumberFormatException("malformed: expected digit");
+        throw new NumberFormatException("Malformed input: Expected digit");
       }
       buf += (char) this.read();
     }

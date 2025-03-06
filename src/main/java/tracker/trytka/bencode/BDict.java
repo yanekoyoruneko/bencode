@@ -73,7 +73,7 @@ public class BDict extends BValue<SortedMap<BString, BValue<?>>> {
 
   public static BDict parseBDict(Decoder decoder) throws IOException {
     if (decoder.read() != 'd') {
-      throw new IllegalArgumentException("malformed: expected 'd'");
+      throw new IllegalArgumentException("Malformed input: Expected 'd'");
     }
     var bdict = new BDict();
     byte peeked;
@@ -85,7 +85,7 @@ public class BDict extends BValue<SortedMap<BString, BValue<?>>> {
       throw new IOException("unexpected EOF");
     }
     if (decoder.read() != 'e') {
-      throw new IllegalStateException("(unreachable) expected 'e'");
+      throw new IllegalStateException("UNREACHABLE: Expected 'e'");
     }
     return bdict;
   }
