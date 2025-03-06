@@ -34,6 +34,10 @@ public class BDict extends BValue<SortedMap<BString, BValue<?>>> {
     return this.value.get(new BString(key));
   }
 
+  public BValue<?> get(BString key) {
+    return this.value.get(key);
+  }
+
   @Override
   public String toString() {
     return this.toString(0);

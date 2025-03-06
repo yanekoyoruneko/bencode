@@ -1,8 +1,10 @@
 package tracker.trytka.bencode;
 
 import java.lang.reflect.Field;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 public class Metainfo {
   public BString announce, createdBy, comment, encoding, info_name, info_pieces, info_md5sum;
@@ -23,23 +25,32 @@ public class Metainfo {
   }
 
   public boolean isSingleFileMode() {
-    return info_length != null;
+    return info_length != null && info_name != null;
+  }
+
+  public byte[] info_hash() {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-1");
+      return digest.digest(buildBDict().get("info").encode());
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
   public String toString() {
-    return make().toString();
+    return buildBDict().toString();
   }
 
   public byte[] encode() {
-    return make().encode();
+    return buildBDict().encode();
   }
 
   private Field getField(String field) {
     try {
       return this.getClass().getDeclaredField(field);
     } catch (NoSuchFieldException e) {
-      throw new IllegalStateException("unreachable: key has to be Metainfo field: ");
+      throw new IllegalStateException("UNREACHABLE: Key should be Metainfo field: " + field);
     }
   }
 
@@ -47,7 +58,8 @@ public class Metainfo {
     try {
       return (BValue<?>) field.get(this);
     } catch (IllegalAccessException e) {
-      throw new IllegalStateException("unreachable");
+      throw new IllegalStateException(
+          "UNREACHABLE: Key should be Metainfo Field: " + field.getName());
     }
   }
 
@@ -55,7 +67,7 @@ public class Metainfo {
     try {
       field.set(this, value);
     } catch (IllegalAccessException e) {
-      throw new IllegalStateException("unreachable: fields names should match class fields");
+      throw new IllegalStateException("UNREACHABLE: Fields names should match class fields");
     }
   }
 
@@ -85,11 +97,45 @@ public class Metainfo {
     return bdict.get(toMetaName(key));
   }
 
+  public void validateFileMode() throws IllegalArgumentException {
+    if (this.isMultipleFileMode()) {
+      if (info_length != null) {
+        throw new IllegalArgumentException("Must be either single or multi file mode");
+      }
+      for (var el : this.info_files.getValue()) {
+        if (!(el instanceof BDict)) {
+          throw new IllegalArgumentException("info/files should be dictionary");
+        }
+        var fileBDict = (BDict) el;
+        var keys = Set.of(new BString("length"), new BString("path"));
+        if (!fileBDict.getValue().keySet().equals(keys)) {
+          throw new IllegalArgumentException("info/files/ dictionary contains invalid keys");
+        }
+        var path = fileBDict.get("path");
+        if (!(path instanceof BList)) {
+          throw new IllegalArgumentException("info/files/-/path should be list");
+        }
+        for (var subpath : ((BList) path).getValue()) {
+          if (!(subpath instanceof BString)) {
+            throw new IllegalArgumentException("info/files/-/path/* should be string");
+          }
+        }
+      }
+    } else if (isSingleFileMode()) {
+      if (info_files != null) {
+        throw new IllegalArgumentException("Must be either single or multi file mode");
+      }
+    } else {
+      throw new IllegalArgumentException("Missing file information (name/length/files)");
+    }
+  }
+
   public static Metainfo of(BDict bdict) throws IllegalArgumentException {
     var meta = new Metainfo();
     if (!(bdict.get("info") instanceof BDict)) {
-      throw new IllegalArgumentException("metainfo malformed: info should be dictionary");
+      throw new IllegalArgumentException("Metainfo malformed: info should be dictionary");
     }
+    int countSetInfo = 0;
     for (String key : meta.fields) {
       BValue<?> value;
       if ((value = getMetaValue(bdict, key)) == null) {
@@ -99,13 +145,20 @@ public class Metainfo {
       try {
         meta.setFieldValue(field, value);
       } catch (IllegalArgumentException e) {
-        throw new IllegalArgumentException("metainfo malformed: invalid type for '" + key + "'");
+        throw new IllegalArgumentException("Metainfo malformed: invalid type for '" + key + "'");
+      }
+      if (key.split("_")[0].equals("info")) {
+        countSetInfo++;
       }
     }
+    if (((BDict) bdict.get("info")).getValue().keySet().size() != countSetInfo) {
+      throw new IllegalArgumentException("Unrecognized keys inside info dictionary");
+    }
+    meta.validateFileMode();
     return meta;
   }
 
-  public BDict make() {
+  public BDict buildBDict() {
     var bdict = new BDict();
     for (String key : this.fields) {
       var value = getFieldValue(getField(key));
