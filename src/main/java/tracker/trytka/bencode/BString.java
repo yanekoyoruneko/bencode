@@ -21,6 +21,10 @@ public class BString extends BValue<byte[]> implements Comparable<BValue<byte[]>
     super(value);
   }
 
+  public String getStringValue() {
+    return new String(this.value, Decoder.encoding);
+  }
+
   @Override
   public int hashCode() {
     return Objects.hash(Arrays.hashCode(this.value));

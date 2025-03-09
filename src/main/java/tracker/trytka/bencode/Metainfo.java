@@ -1,9 +1,15 @@
 package tracker.trytka.bencode;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class Metainfo {
@@ -26,6 +32,24 @@ public class Metainfo {
 
   public boolean isSingleFileMode() {
     return info_length != null && info_name != null;
+  }
+
+  public Map<String, Long> getFiles() {
+    if (!isMultipleFileMode()) return null;
+    this.validateFileMode(); // assume types
+    var files = new HashMap<String, Long>();
+    for (var f : info_files.getValue()) {
+      var entry = ((BDict) f);
+      var finalpath = new StringBuilder();
+      ArrayList<BValue<?>> path = entry.getBList("path").getValue();
+      for (int i = 0; i < path.size() - 1; i++) {
+        finalpath.append(((BString) path.get(i)).getStringValue() + "/");
+      }
+      finalpath.append(((BString) path.get(path.size() - 1)).getStringValue());
+      Long length = entry.getBInt("length").getValue();
+      files.put(finalpath.toString(), length);
+    }
+    return files;
   }
 
   public byte[] info_hash() {
@@ -79,11 +103,11 @@ public class Metainfo {
   private static void putMetaValue(BDict bdict, String key, BValue<?> value) {
     var path = key.split("_");
     if (path[0].equals("info")) {
-      var info = bdict.get("info");
+      var info = bdict.getBDict("info");
       if (info == null) {
         bdict.put("info", new BDict());
       }
-      ((BDict) bdict.get("info")).put(toMetaName(path[1]), value);
+      bdict.getBDict("info").put(toMetaName(path[1]), value);
     } else {
       bdict.put(toMetaName(path[0]), value);
     }
@@ -92,7 +116,7 @@ public class Metainfo {
   private static BValue<?> getMetaValue(BDict bdict, String key) {
     var path = key.split("_");
     if (path[0].equals("info")) {
-      return ((BDict) bdict.get("info")).get(toMetaName(path[1]));
+      return bdict.getBDict("info").get(toMetaName(path[1]));
     }
     return bdict.get(toMetaName(key));
   }
@@ -130,6 +154,14 @@ public class Metainfo {
     }
   }
 
+  public static Metainfo ofStream(InputStream stream) throws IOException {
+    var parsed = new Decoder(ByteBuffer.wrap(stream.readAllBytes())).parse();
+    if (!(parsed instanceof BDict)) {
+      throw new IllegalArgumentException("Malformed input: expected metainfo dictionary");
+    }
+    return Metainfo.of((BDict) parsed);
+  }
+
   public static Metainfo of(BDict bdict) throws IllegalArgumentException {
     var meta = new Metainfo();
     if (!(bdict.get("info") instanceof BDict)) {
@@ -151,7 +183,7 @@ public class Metainfo {
         countSetInfo++;
       }
     }
-    if (((BDict) bdict.get("info")).getValue().keySet().size() != countSetInfo) {
+    if (bdict.getBDict("info").getValue().keySet().size() != countSetInfo) {
       throw new IllegalArgumentException("Unrecognized keys inside info dictionary");
     }
     meta.validateFileMode();

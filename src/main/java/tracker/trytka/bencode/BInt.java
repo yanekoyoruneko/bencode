@@ -14,6 +14,10 @@ public class BInt extends BValue<Long> implements Comparable<BValue<Long>> {
     this.value = (long) value;
   }
 
+  public int getIntValue() {
+    return Math.toIntExact(this.value);
+  }
+
   @Override
   public int compareTo(BValue<Long> other) {
     return this.value.compareTo(other.value);

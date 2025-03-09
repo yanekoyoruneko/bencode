@@ -15,18 +15,18 @@ public class Decoder {
     this.buffer = in;
   }
 
-  public byte peek() throws IOException {
+  byte peek() throws IOException {
     if (buffer.remaining() == 0) {
       throw new IOException("Unexpected EOF");
     }
     return buffer.get(buffer.position());
   }
 
-  public byte read() {
+  byte read() {
     return buffer.get();
   }
 
-  public void read(byte[] buf) {
+  void read(byte[] buf) {
     buffer.get(buf);
   }
 

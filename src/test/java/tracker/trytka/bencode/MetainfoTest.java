@@ -18,6 +18,12 @@ public class MetainfoTest {
     var decoder = new Decoder(ByteBuffer.wrap(raw));
     var bdict = decoder.parse();
     var meta = Metainfo.of((BDict) bdict);
+    if (meta.isMultipleFileMode()) {
+      System.out.println("FILES:");
+      for (var file : meta.getFiles().entrySet()) {
+        System.out.println(file);
+      }
+    }
     System.out.println(meta);
   }
 }
