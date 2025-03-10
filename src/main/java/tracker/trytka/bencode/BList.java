@@ -28,7 +28,7 @@ public class BList extends BValue<ArrayList<BValue<?>>> {
     return this;
   }
 
-  public BList add(String key, BValue<?> bval) {
+  public BList add(BValue<?> bval) {
     this.value.add(bval);
     return this;
   }
