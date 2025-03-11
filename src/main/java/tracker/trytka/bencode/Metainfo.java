@@ -52,6 +52,21 @@ public class Metainfo {
     return files;
   }
 
+  public Metainfo addFile(String path, Long length) {
+    if (info_files == null) {
+      info_files = new BList();
+    }
+    var filePath = new BList();
+    for (var subpath : path.split("/")) {
+      filePath.add(subpath);
+    }
+    var file = new BDict();
+    file.put("length", length);
+    file.put("path", filePath);
+    info_files.add(file);
+    return this;
+  }
+
   public byte[] info_hash() {
     try {
       MessageDigest digest = MessageDigest.getInstance("SHA-1");
