@@ -61,6 +61,59 @@ public class Metainfo {
     }
   }
 
+  public String info_hash_url() {
+    var url = new StringBuilder();
+    byte[] hash = info_hash();
+    for (int i = 0; i < 20; i++) {
+      byte ch = hash[i];
+      if (Character.isLetterOrDigit(ch) || "._~-".indexOf(ch) != -1) {
+        url.append((char) ch);
+        continue;
+      }
+      url.append(String.format("%%%02x", ch));
+    }
+    return url.toString();
+  }
+
+  public String info_hash_str() {
+    var repr = new StringBuilder();
+    repr.append("\\x");
+    for (var b : info_hash()) {
+      repr.append(String.format("%02x", b));
+    }
+    return repr.toString();
+  }
+
+  public static byte[] decodeInfoHashURL(String url) {
+    byte[] hash = new byte[20];
+    var urlb = url.getBytes(Decoder.encoding);
+    int u, h;
+    for (h = 0, u = 0; h < 20 && urlb.length - u > 0; h++) {
+      if (urlb[u] != '%') {
+        hash[h] = urlb[u];
+        u += 1;
+        continue;
+      }
+      if (urlb.length - u - 2 <= 0) {
+        throw new IllegalArgumentException("unexpected end of string after %");
+      }
+      int upper = Character.digit(urlb[u + 1], 16);
+      int lower = Character.digit(urlb[u + 2], 16);
+      if (upper == -1 || lower == -1) {
+        throw new IllegalArgumentException("not valid hex string after %");
+      }
+      hash[h] = (byte) (upper * 16 + lower);
+      u += 3;
+    }
+    if (urlb.length - u > 0) {
+      throw new IllegalArgumentException("info hash url too long");
+    }
+    if (h != 20) {
+      throw new IllegalArgumentException("info hash url too short");
+    }
+    return hash;
+  }
+
   @Override
   public String toString() {
     return buildBDict().toString();
